@@ -6,7 +6,6 @@
  *                                                                                                *
  ************************************************************************************************ */
 
-
 /**
  * Returns the rectangle object with width and height parameters and getArea() method
  *
@@ -20,10 +19,15 @@
  *    console.log(r.height);      // => 20
  *    console.log(r.getArea());   // => 200
  */
-function Rectangle(/* width, height */) {
-  throw new Error('Not implemented');
+function Rectangle(width, height) {
+  return {
+    width,
+    height,
+    getArea() {
+      return width * height;
+    },
+  };
 }
-
 
 /**
  * Returns the JSON representation of specified object
@@ -35,10 +39,9 @@ function Rectangle(/* width, height */) {
  *    [1,2,3]   =>  '[1,2,3]'
  *    { width: 10, height : 20 } => '{"height":10,"width":20}'
  */
-function getJSON(/* obj */) {
-  throw new Error('Not implemented');
+function getJSON(obj) {
+  return JSON.stringify(obj);
 }
-
 
 /**
  * Returns the object of specified type from JSON representation
@@ -51,10 +54,10 @@ function getJSON(/* obj */) {
  *    const r = fromJSON(Circle.prototype, '{"radius":10}');
  *
  */
-function fromJSON(/* proto, json */) {
-  throw new Error('Not implemented');
+function fromJSON(proto, json) {
+  const obj = JSON.parse(json);
+  return Object.setPrototypeOf(obj, proto);
 }
-
 
 /**
  * Css selectors builder
@@ -111,32 +114,90 @@ function fromJSON(/* proto, json */) {
  */
 
 const cssSelectorBuilder = {
-  element(/* value */) {
-    throw new Error('Not implemented');
+  result: '',
+  queue: [],
+
+  stringify() {
+    return this.result;
   },
 
-  id(/* value */) {
-    throw new Error('Not implemented');
+  element(value) {
+    const obj = Object.setPrototypeOf({}, cssSelectorBuilder);
+    obj.result += value;
+    obj.q = 1;
+    obj.queue = [...this.queue, obj.q];
+    this.isUniq(obj.q);
+    this.isOrder(obj.q);
+    return obj;
   },
 
-  class(/* value */) {
-    throw new Error('Not implemented');
+  id(value) {
+    const obj = Object.setPrototypeOf({}, cssSelectorBuilder);
+    obj.result += `${this.result}#${value}`;
+    obj.q = 2;
+    obj.queue = [...this.queue, obj.q];
+    this.isUniq(obj.q);
+    this.isOrder(obj.q);
+    return obj;
   },
 
-  attr(/* value */) {
-    throw new Error('Not implemented');
+  class(value) {
+    const obj = Object.setPrototypeOf({}, cssSelectorBuilder);
+    obj.result += `${this.result}.${value}`;
+    obj.q = 3;
+    obj.queue = [...this.queue, obj.q];
+    this.isOrder(obj.q);
+    return obj;
   },
 
-  pseudoClass(/* value */) {
-    throw new Error('Not implemented');
+  attr(value) {
+    const obj = Object.setPrototypeOf({}, cssSelectorBuilder);
+    obj.result += `${this.result}[${value}]`;
+    obj.q = 4;
+    obj.queue = [...this.queue, obj.q];
+    this.isOrder(obj.q);
+    return obj;
   },
 
-  pseudoElement(/* value */) {
-    throw new Error('Not implemented');
+  pseudoClass(value) {
+    const obj = Object.setPrototypeOf({}, cssSelectorBuilder);
+    obj.result += `${this.result}:${value}`;
+    obj.q = 5;
+    obj.queue = [...this.queue, obj.q];
+    this.isOrder(obj.q);
+    return obj;
   },
 
-  combine(/* selector1, combinator, selector2 */) {
-    throw new Error('Not implemented');
+  pseudoElement(value) {
+    const obj = Object.setPrototypeOf({}, cssSelectorBuilder);
+
+    obj.result += `${this.result}::${value}`;
+    obj.q = 6;
+    obj.queue = [...this.queue, obj.q];
+    this.isUniq(obj.q);
+    this.isOrder(obj.q);
+    return obj;
+  },
+
+  combine(selector1, combinator, selector2) {
+    const obj = Object.setPrototypeOf({}, cssSelectorBuilder);
+    obj.result = `${selector1.result} ${combinator} ${selector2.result}`;
+    return obj;
+  },
+
+  isUniq(id) {
+    if (this.queue.includes(id)) {
+      throw new Error(
+        'Element, id and pseudo-element should not occur more then one time inside the selector',
+      );
+    }
+  },
+  isOrder(id) {
+    if (this.q > id) {
+      throw new Error(
+        'Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element',
+      );
+    }
   },
 };
 
